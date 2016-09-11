@@ -19,11 +19,17 @@
         android:textSize="30dp" />
 
     <Button
-        android:id="@+id/button"
+        android:id="@+id/button_notification01"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@+id/textView"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="62dp"
-        android:text="Notification" />
+        android:text="Notification 01" />
+    <Button
+        android:id="@+id/button_notification02"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/button_notification01"
+        android:layout_centerHorizontal="true"
+        android:text="Notification 02" />
 </RelativeLayout>
