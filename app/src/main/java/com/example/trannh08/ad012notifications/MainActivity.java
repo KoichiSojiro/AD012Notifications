@@ -1,5 +1,6 @@
 package com.example.trannh08.ad012notifications;
 
+import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.TaskStackBuilder;
@@ -13,12 +14,12 @@ import android.widget.Button;
 public class MainActivity extends AppCompatActivity {
 
     private final String EXTRAS_NOTIFICATION_ID = "notificationID";
-    private final int NOTIFICATION_ID_NOTIFICATION01 = 1;
-    private final int NOTIFICATION_ID_NOTIFICATION02 = 2;
-    private final String EXTRA_MESSAGE_01 = "messages_01";
-    private final String EXTRA_MESSAGE_02 = "messages_02";
-    private Button button_notification01;
-    private Button button_notification02;
+    private final int NOTIFICATION_ID_NOTIFICATION = 1;
+    private final int NOTIFICATION_ID_NOTIFICATION_COMPAT = 2;
+    private final String EXTRA_MESSAGE_NOTIFICATION = "messages_01";
+    private final String EXTRA_MESSAGE_NOTIFICATION_COMPAT = "messages_02";
+    private Button button_notification;
+    private Button button_notification_compat;
     private int numMessages = 0;
 
     @Override
@@ -26,31 +27,32 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        button_notification01 = (Button) findViewById(R.id.button_notification01);
-        button_notification01.setOnClickListener(new View.OnClickListener() {
+        button_notification = (Button) findViewById(R.id.button_notification01);
+        button_notification.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Notify(NOTIFICATION_ID_NOTIFICATION01,
-                        "You've received new notification.", "Notification 01",
-                        EXTRA_MESSAGE_01, "This is the sample for Notification 01");
+                Notify_Notification(NOTIFICATION_ID_NOTIFICATION,
+                        "You've received new Notification.", "Test Notification",
+                        EXTRA_MESSAGE_NOTIFICATION, "This is the sample for Notification");
             }
         });
 
-        button_notification02 = (Button) findViewById(R.id.button_notification02);
-        button_notification02.setOnClickListener(new View.OnClickListener() {
+        button_notification_compat = (Button) findViewById(R.id.button_notification02);
+        button_notification_compat.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Notify(NOTIFICATION_ID_NOTIFICATION02,
-                        "You've received new notification.", "Notification 02",
-                        EXTRA_MESSAGE_02, "This is the sample for Notification 02");
+                Notify_NotificationCompat(NOTIFICATION_ID_NOTIFICATION_COMPAT,
+                        "You've received new NotificationCompat.", "Test NotificationCompat",
+                        EXTRA_MESSAGE_NOTIFICATION_COMPAT, "This is the sample for NotificationCompat");
             }
         });
     }
 
+    // approach 01: CLASSIC NOTIFICATION
     @SuppressWarnings("deprecation")
-    private void Notify(int notificationID, String notificationTitle, String notificationMessage,
-                        String extraMessageKey, String extraMessage) {
-        NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+    private void Notify_Notification(int notificationID, String notificationTitle, String notificationMessage,
+                                     String extraMessageKey, String extraMessage) {
+        // handle intent and extras
         Intent intent = new Intent(this, NotificationActivity.class);
         intent.putExtra(extraMessageKey, extraMessage);
         intent.putExtra(EXTRAS_NOTIFICATION_ID, notificationID);
@@ -58,23 +60,30 @@ public class MainActivity extends AppCompatActivity {
         // using PendingIntent.FLAG_UPDATE_CURRENT to pass parameter to PendingIntent (default = 0)
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 
-        // approach 01: CLASSIC NOTIFICATION
-//        Notification notification = new Notification.Builder(this)
-//                .setSmallIcon(R.drawable.ic_action_name)
-//                .setContentTitle(notificationTitle)
-//                .setContentText(notificationMessage)
-//                .setContentIntent(pendingIntent)
-//                .build();
-//        // add this flag to make notification disappear after clicking
-//        notification.flags |= Notification.FLAG_AUTO_CANCEL;
-//        notificationManager.notify(notificationID, notification);
+        Notification notification = new Notification.Builder(this)
+                .setSmallIcon(R.drawable.ic_action_name)
+                .setContentTitle(notificationTitle)
+                .setContentText(notificationMessage)
+                .setContentIntent(pendingIntent)
+                .build();
+        // add this flag to make notification disappear after clicking
+        notification.flags |= Notification.FLAG_AUTO_CANCEL;
 
-        // approach 02: MODERN NOTIFICATION
+        // call NotificationManager
+        NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        notificationManager.notify(notificationID, notification);
+    }
+
+    @SuppressWarnings("deprecation")
+    // approach 02: MODERN NOTIFICATION - USING [INBOX STYLE]
+    private void Notify_NotificationCompat(int notificationID, String notificationTitle, String notificationMessage,
+                                           String extraMessageKey, String extraMessage) {
         NotificationCompat.Builder builder = (NotificationCompat.Builder) new NotificationCompat.Builder(this)
                 .setSmallIcon(R.drawable.ic_action_name)
                 .setContentTitle(notificationTitle)
                 .setContentText(notificationMessage);
-        builder.setContentIntent(pendingIntent);
+
+        builder.setTicker("New NotificationCompat InboxStyle!");
         // show number of notifications were showing
         builder.setNumber(++numMessages);
         // create an Inbox Style
@@ -94,14 +103,25 @@ public class MainActivity extends AppCompatActivity {
         }
         // tell program that NotificationCompat.Builder is using InboxStyle
         builder.setStyle(inboxStyle);
+
+        // handle intent and extras
+        Intent intent = new Intent(this, NotificationActivity.class);
+        intent.putExtra(extraMessageKey, extraMessage);
+        intent.putExtra(EXTRAS_NOTIFICATION_ID, notificationID);
+
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
         stackBuilder.addParentStack(NotificationActivity.class);
-        /* Adds the Intent that starts the Activity to the top of the stack */
+        // adds the Intent that starts the Activity to the top of the stack
         stackBuilder.addNextIntent(intent);
-        PendingIntent resultPendingIntent = stackBuilder.getPendingIntent(0, 0);
-        builder.setContentIntent(resultPendingIntent);
+        // using PendingIntent.FLAG_UPDATE_CURRENT to pass parameter to PendingIntent (default = 0)
+        PendingIntent pendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
+        builder.setContentIntent(pendingIntent);
+
         // set AutoCancel(true) to make notification disappear after clicking
         builder.setAutoCancel(true);
+
+        // call NotificationManager
+        NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         notificationManager.notify(notificationID, builder.build());
     }
 }
